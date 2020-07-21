@@ -1,2 +1,2 @@
 # Golem
- Golem - a electric kiln controller
+An open controller for electric kilns.
