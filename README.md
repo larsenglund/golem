@@ -24,3 +24,6 @@ and the same profile in JSON:
     }
 }
 ```
+
+## Todo
+* Add file browser for uploading, downloading, viewing and editing raw JSON-files. ACE might be a good editor to embed.
