@@ -6,11 +6,14 @@
 //#include <SPIFFS.h>
 #include <ESPAsyncWebServer.h>
 #include <WebSocketsServer.h>
-#include <Adafruit_GFX.h>      // include Adafruit graphics library
-#include <Adafruit_ST7735.h>   // include Adafruit ST7735 TFT library
-#include <Fonts/FreeSansBold24pt7b.h>
+//#include <Adafruit_GFX.h>      // include Adafruit graphics library
+//#include <Adafruit_ST7735.h>   // include Adafruit ST7735 TFT library
+//#include <Fonts/Picopixel.h>
+//#include <Fonts/FreeSansBold24pt7b.h>
 //#include <MAX31855.h>
 #include <MAX31855soft.h>
+#include <SPI.h>
+#include <TFT_eSPI.h>
 
 // Constants
 const char *ssid = "Golem-AP";
@@ -24,6 +27,7 @@ const int led_pin = LED_BUILTIN;
 const int thermocouple_so = D6;
 const int thermocouple_cs = D0;
 const int thermocouple_sck = D8;
+const int max_num_segments = 12;
 
 MAX31855soft myMAX31855(thermocouple_cs, thermocouple_so, thermocouple_sck);
 
@@ -38,6 +42,10 @@ int led_state = 0;
 int32_t rawData = 0;
 float thermocouple_temp = 0;
 uint32_t tft_refresh_timestamp = 0;
+int num_segments = 7;
+int current_segment = 2;
+int segment_rate[max_num_segments];
+int segment_target[max_num_segments];
 
 // ST7735 TFT module connections
 #define TFT_RST   D4     // TFT RST pin is connected to NodeMCU pin D4 (GPIO2)
@@ -46,7 +54,8 @@ uint32_t tft_refresh_timestamp = 0;
 // initialize ST7735 TFT library with hardware SPI module
 // SCK (CLK) ---> NodeMCU pin D5 (GPIO14)
 // MOSI(DIN) ---> NodeMCU pin D7 (GPIO13)
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+//Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+TFT_eSPI tft;
 
 
 // Callback: receiving any WebSocket message
@@ -173,17 +182,21 @@ void readThermocouple() {
   Serial.println(thermocouple_temp);
 }
 
+void setSegmentColor(int n);
+
 void setup() {
   Serial.begin(115200);
   Serial.println(F("\nGolem setup"));
 
-  tft.initR(INITR_BLACKTAB);
-  tft.setRotation(2);
+  //tft.initR(INITR_BLACKTAB);
+  //tft.initR(INITR_BLACKTAB);
+  tft.init();
+  //tft.setRotation(2);
   tft.fillScreen(ST7735_BLACK);
   tft.setCursor(0, 0);
+  //tft.setFont(&Picopixel);
   tft.setTextColor(ST7735_WHITE);
-  tft.setTextWrap(true);
-  tft.println("GOLEM");
+  tft.println("Golem setup...");
 
   //pinMode(LED_BUILTIN, OUTPUT);
 
@@ -264,19 +277,62 @@ void loop() {
     readThermocouple();
   
     tft.fillScreen(ST7735_BLACK);
+
     tft.setCursor(0, 0);
+    //tft.setFont(&Picopixel);
     tft.setTextColor(ST7735_WHITE);
     tft.setTextWrap(true);
-    tft.println("GOLEM");
+    tft.println("KILN CELSIUS");
 
-    tft.setCursor(0, 35);
-    tft.setFont(&FreeSansBold24pt7b);
+    //tft.setCursor(0, 45);
+    //tft.setFont(&FreeSansBold24pt7b);
+    tft.setTextSize(3);
     tft.setTextColor(ST7735_YELLOW);
-    tft.print(thermocouple_temp, 0);
-    tft.setFont();
+    //tft.print(thermocouple_temp, 0);
+    tft.println("1337");
+    tft.setTextSize(1);
+
+    tft.drawLine(72,0,72,30,ST7735_GREEN);
+
+    tft.setCursor(74, 0);
+    tft.printf("%4.1f/%4.1f", 1.2, 2.5);
+    tft.setCursor(74, 8);
+    tft.printf("%4.1f/%4.1f", 2.2, 4.5);
+
+
+    tft.drawLine(0,30,128,30,ST7735_GREEN);
+
+    tft.setCursor(0, 32);
+    tft.setTextColor(ST7735_GREEN);
+    //tft.setFont(&Picopixel);
+    for (int n=1; n<max_num_segments; n+=2) {
+      setSegmentColor(n);
+      tft.printf("%2d", n);
+      tft.printf("%4d", 80);
+      tft.printf("%4d ", 250);
+      setSegmentColor(n+1);
+      tft.printf("%2d", n+1);
+      tft.printf("%4d", 80);
+      tft.printf("%4d\n", 250);
+    }
   }
 
   dnsServer.processNextRequest();
   webSocket.loop();
   delay(10);
+}
+
+void setSegmentColor(int n) {
+  if (n == current_segment) {
+    tft.setTextColor(ST7735_RED);
+  }
+  else if (n < current_segment) {
+    tft.setTextColor(ST7735_GREEN);
+  }
+  else if (n > num_segments) {
+    tft.setTextColor(ST7735_BLUE);
+  }
+  else {
+    tft.setTextColor(ST7735_YELLOW);
+  }
 }
