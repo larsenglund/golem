@@ -27,7 +27,7 @@ const int led_pin = LED_BUILTIN;
 const int thermocouple_so = D6;
 const int thermocouple_cs = D0;
 const int thermocouple_sck = D8;
-const int max_num_segments = 12;
+const int max_num_segments = 10;
 
 MAX31855soft myMAX31855(thermocouple_cs, thermocouple_so, thermocouple_sck);
 
@@ -42,10 +42,10 @@ int led_state = 0;
 int32_t rawData = 0;
 float thermocouple_temp = 0;
 uint32_t tft_refresh_timestamp = 0;
-int num_segments = 7;
+int num_segments = 5;
 int current_segment = 2;
-int segment_rate[max_num_segments];
-int segment_target[max_num_segments];
+int segment_rate[max_num_segments] = {80, 100, 50, 80, 0, 0, 0, 0, 0, 0};
+int segment_target[max_num_segments] = {250, 800, 1000, 1200, 0, 0, 0, 0, 0, 0};
 
 // ST7735 TFT module connections
 #define TFT_RST   D4     // TFT RST pin is connected to NodeMCU pin D4 (GPIO2)
@@ -288,18 +288,23 @@ void loop() {
     //tft.setFont(&FreeSansBold24pt7b);
     tft.setTextSize(3);
     tft.setTextColor(ST7735_YELLOW);
-    //tft.print(thermocouple_temp, 0);
-    tft.println("1337");
+    tft.printf("%4d", (int)(thermocouple_temp+0.5));
+    //tft.println("1337");
     tft.setTextSize(1);
 
     tft.drawLine(72,0,72,30,ST7735_GREEN);
 
     tft.setCursor(74, 0);
+    tft.setTextColor(ST7735_RED);
+    tft.print("WIFI ");
+    tft.setTextColor(ST7735_GREEN);
+    tft.print("HEAT");
+    tft.setCursor(74, 14);
     tft.printf("%4.1f/%4.1f", 1.2, 2.5);
-    tft.setCursor(74, 8);
+    tft.setCursor(74, 22);
     tft.printf("%4.1f/%4.1f", 2.2, 4.5);
 
-
+    tft.drawLine(0,30,128,30,ST7735_GREEN);
     tft.drawLine(0,30,128,30,ST7735_GREEN);
 
     tft.setCursor(0, 32);
@@ -308,13 +313,15 @@ void loop() {
     for (int n=1; n<max_num_segments; n+=2) {
       setSegmentColor(n);
       tft.printf("%2d", n);
-      tft.printf("%4d", 80);
-      tft.printf("%4d ", 250);
+      tft.printf("%4d", segment_rate[n]);
+      tft.printf("%4d ", segment_target[n]);
       setSegmentColor(n+1);
       tft.printf("%2d", n+1);
-      tft.printf("%4d", 80);
-      tft.printf("%4d\n", 250);
+      tft.printf("%4d", segment_rate[n+1]);
+      tft.printf("%4d\n", segment_target[n+1]);
     }
+
+    tft.drawLine(0,80,128,80,ST7735_GREEN);
   }
 
   dnsServer.processNextRequest();

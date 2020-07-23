@@ -130,7 +130,7 @@ window.addEventListener("load", init, false);
         <h1>
         Firing profile
         </h1>
-        Name: <input type="text"/>
+        Name: <input type="text" id="pname"/>
         <div id="cont"></div>  <!-- the container to add the TABLE -->
         
         <p>
@@ -212,8 +212,11 @@ window.addEventListener("load", init, false);
             // function to extract and submit table data.
             function submit() {
                 var myTab = document.getElementById('empTable');
+                var myName = document.getElementById('pname');
                 var arrValues = new Array();
         
+                arrValues.push("'" + myName.value + "'");
+
                 // loop through each row of the table.
                 for (row = 1; row < myTab.rows.length - 1; row++) {
                     // loop through each cell in a row.
