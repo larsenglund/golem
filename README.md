@@ -42,6 +42,7 @@ If segment number is zero it means the firing profile is not running.
 
 ## Temperature control and graphing
 Temperature readings are taken every second. These sliding average over the last 5 seconds is shown as the live temperature. The average over one minute is added to the graph and used for determining if the relays should be on or off during the next minute.
+The graph on the TFT shows one pixel per 50 degrees.
 
 ## Todo
 * Add file browser for uploading, downloading, viewing and editing raw JSON-files. ACE might be a good editor to embed.
