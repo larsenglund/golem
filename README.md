@@ -25,7 +25,7 @@ and the same profile in JSON:
 }
 ```
 
-but currently each profile is stored as a SPIFFS file in the root as /<profile name> and contains ```<rate>,<target>{,<rate>,<target>}```, for example:
+but currently each profile is stored as a SPIFFS file in the root as ```/<profile name>``` and contains ```<rate>,<target>{,<rate>,<target>}```, for example:
 
 ```
 80,250,50,800
