@@ -55,5 +55,12 @@ Hardware test setup:
 
 ![Hardware test setup](docs/images/IMG_20200724_231232.jpg)
 
+## User Interface
+The user interface is served through a captive portal on the ESP and uses websockets and client side javascript. 
+The user can;
+* perform CRUD operations on firing profiles
+* start and stop a firing profile
+* start and stop the kiln manually
+
 ## Todo
 * Add file browser for uploading, downloading, viewing and editing raw JSON-files. ACE might be a good editor to embed.
