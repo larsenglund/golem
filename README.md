@@ -45,6 +45,12 @@ Temperature readings are taken every second. These sliding average over the last
 The graph on the TFT shows one Y-pixel per 50 degrees and one X-pixel per 3 minutes.
 
 ## Hardware
+* ESP8266 or ESP32
+* MAX31855
+* K-type thermoucouple rated for atleast 1300 degrees
+* 1.44 inch TFT (128x128px) (optional)
+* 3 x Solid State Relays (one for each phase of the three phase 400VAC kiln)
+
 Hardware test setup:
 
 ![Hardware test setup](docs/images/IMG_20200724_231232.jpg)
