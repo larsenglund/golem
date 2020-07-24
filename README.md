@@ -31,5 +31,14 @@ but currently each profile is stored as a SPIFFS file in the root as ```/<profil
 80,250,50,800
 ```
 
+The last open profile and the state of that firing is stored in ```/state/current``` and contains:
+
+```
+<profile name>
+<segment number>
+```
+
+If segment number is zero it means the firing profile is not running.
+
 ## Todo
 * Add file browser for uploading, downloading, viewing and editing raw JSON-files. ACE might be a good editor to embed.
