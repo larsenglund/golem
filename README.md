@@ -63,6 +63,6 @@ The user can;
 * perform CRUD operations on firing profiles
 * start and stop a firing profile
 * start and stop the kiln manually
-
+The AP name is "Golem-AP" and the password is "golgolem".
 ## Todo
 * Add file browser for uploading, downloading, viewing and editing raw JSON-files. ACE might be a good editor to embed.
