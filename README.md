@@ -30,7 +30,7 @@ and the same profile in JSON:
 but currently each profile is stored as a SPIFFS file like ```/prog/<profile name>``` and contains ```<rate>,<target>,<hold>{,<rate>,<target>,<hold>}```, for example:
 
 ```
-80,250,50,800
+80,250,0,50,800,0
 ```
 
 The last open profile and the state of that firing is stored in ```/state/current``` and contains:
