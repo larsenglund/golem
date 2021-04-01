@@ -26,6 +26,7 @@ const int ws_port = 1337;
 const int led_pin = LED_BUILTIN;
 const int thermocouple_so = D6;
 const int thermocouple_cs = D0;
+const int kiln_ssr = D1;
 const int thermocouple_sck = D8;
 const int max_num_segments = 10;
 const int minutes_per_pixel = 3;
@@ -39,8 +40,9 @@ IPAddress apIP(192, 168, 4, 1);
 DNSServer dnsServer;
 AsyncWebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(1337);
-char msg_buf[10];
+char msg_buf[256];
 int led_state = 0;
+int kiln_ssr_state = 0;
 int32_t rawData = 0;
 float thermocouple_temp = 0;
 uint32_t tft_refresh_timestamp = 0;
@@ -50,6 +52,7 @@ File file_current_state;
 int segment_rate[max_num_segments] = {100, 200, 300, 400, 0, 0, 0, 0, 0, 0};
 int segment_target[max_num_segments] = {200, 300, 900, 1200, 0, 0, 0, 0, 0, 0};
 char profile_name[32] = "test profile";
+bool websocket_connected = false;
 
 // ST7735 TFT module connections
 #define TFT_RST   D4     // TFT RST pin is connected to NodeMCU pin D4 (GPIO2)
@@ -61,6 +64,38 @@ char profile_name[32] = "test profile";
 //Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 TFT_eSPI tft;
 
+
+void sendCurrentState(int client_num) {
+  Serial.printf("sendCurrentState to %d\n", client_num);
+  int pos = sprintf(msg_buf, "CURR,%s,%d", profile_name, current_segment);
+  for (int n=0; n<num_segments; n++) {
+    pos += sprintf(&msg_buf[pos], ",%d,%d", segment_rate[n], segment_target[n]);
+  }
+  Serial.printf("Sending to [%d]: %s\n", client_num, msg_buf);
+  webSocket.sendTXT(client_num, msg_buf);
+}
+
+void sendProfileList(int client_num) {
+  Serial.printf("sendProfileList to %d\n", client_num);
+  int pos = sprintf(msg_buf, "LIST");
+  Dir dir = SPIFFS.openDir("/prog");
+  int n=0;
+  while (dir.next()) {
+    Serial.print("  ");
+    Serial.print(dir.fileName());
+    Serial.print(" ");
+    pos += sprintf(&msg_buf[pos], ",%s", dir.fileName().c_str());
+    if(dir.fileSize()) {
+        File f = dir.openFile("r");
+        Serial.println(f.size());
+        f.close();
+        n++;
+    }
+  }
+  Serial.printf("Found %d firing profiles\n", n);
+  Serial.printf("Sending to [%d]: %s\n", client_num, msg_buf);
+  webSocket.sendTXT(client_num, msg_buf);
+}
 
 // Callback: receiving any WebSocket message
 void onWebSocketEvent(uint8_t client_num,
@@ -74,6 +109,7 @@ void onWebSocketEvent(uint8_t client_num,
     // Client has disconnected
     case WStype_DISCONNECTED:
       Serial.printf("[%u] Disconnected!\n", client_num);
+      websocket_connected = false;
       break;
 
     // New client has connected
@@ -82,6 +118,9 @@ void onWebSocketEvent(uint8_t client_num,
         IPAddress ip = webSocket.remoteIP(client_num);
         Serial.printf("[%u] Connection from ", client_num);
         Serial.println(ip.toString());
+        websocket_connected = true;
+        sendCurrentState(client_num);
+        sendProfileList(client_num);
       }
       break;
 
@@ -89,23 +128,23 @@ void onWebSocketEvent(uint8_t client_num,
     case WStype_TEXT:
 
       // Print out raw message
-      Serial.printf("[%u] Received text: %s\n", client_num, payload);
+      Serial.printf("[%u] Received text: '%s'\n", client_num, payload);
 
       // Toggle LED
-      if ( strcmp((char *)payload, "toggleLED") == 0 ) {
-        led_state = led_state ? 0 : 1;
-        Serial.printf("Toggling LED to %u\n", led_state);
-        digitalWrite(led_pin, led_state);
+      if ( strcmp((char *)payload, "toggleKiln") == 0 ) {
+        kiln_ssr_state = kiln_ssr_state ? 0 : 1;
+        Serial.printf("Toggling kiln to %u\n", kiln_ssr_state);
+        digitalWrite(kiln_ssr, kiln_ssr_state ? 1 : 0);
 
       // Report the state of the LED
-      } else if ( strcmp((char *)payload, "getLEDState") == 0 ) {
+      } else if ( strcmp((char *)payload, "getKilnState") == 0 ) {
         sprintf(msg_buf, "%d", led_state);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
       // Message not recognized
       } else {
-        Serial.println("[%u] Message not recognized");
+        Serial.printf("[%u] Message not recognized", client_num);
       }
       break;
 
@@ -245,7 +284,9 @@ void setup() {
   tft.println("Golem setup...");
 
   //pinMode(LED_BUILTIN, OUTPUT);
-
+  pinMode(kiln_ssr, OUTPUT);
+  digitalWrite(kiln_ssr, HIGH);
+  
   myMAX31855.begin();
   while (myMAX31855.getChipID() != MAX31855_ID)
   {
@@ -346,6 +387,9 @@ void loop() {
     tft_refresh_timestamp = millis() + 1000;
     
     readThermocouple();
+
+    sprintf(msg_buf, "T %d", (int)(thermocouple_temp+0.5));
+    webSocket.broadcastTXT(msg_buf);
   
     tft.fillScreen(ST7735_BLACK);
 
@@ -362,27 +406,27 @@ void loop() {
     //tft.println("1337");
     tft.setTextSize(1);
 
-    tft.drawLine(72,0,72,32,ST7735_GREEN);
+    tft.drawLine(72,0,72,32,TFT_GREEN);
 
     tft.setCursor(74, 0);
-    tft.setTextColor(ST7735_RED);
-    tft.print("WIFI ");
-    tft.setTextColor(ST7735_GREEN);
-    tft.print("HEAT");
+    tft.setTextColor(TFT_RED);
+    tft.print("HEAT ");
+    tft.setTextColor(websocket_connected ? TFT_GREEN : TFT_RED);
+    tft.print("WS");
     tft.setCursor(74, 8);
-    tft.setTextColor(ST7735_GREEN);
+    tft.setTextColor(TFT_GREEN);
     tft.print("PROG");
     tft.setCursor(74, 16);
     tft.printf("%4.1f/%4.1f", 1.2, 2.5);
     tft.setCursor(74, 24);
     tft.printf("%4.1f/%4.1f", 2.2, 4.5);
 
-    tft.drawLine(0,32,128,32,ST7735_GREEN);
+    tft.drawLine(0,32,128,32,TFT_GREEN);
 
     tft.setCursor(0, 34);
     tft.print(profile_name);
     tft.setCursor(0, 42);
-    tft.setTextColor(ST7735_GREEN);
+    tft.setTextColor(TFT_GREEN);
     //tft.setFont(&Picopixel);
     for (int n=1; n<max_num_segments; n+=2) {
       setSegmentColor(n);

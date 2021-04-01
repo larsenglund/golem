@@ -14,26 +14,26 @@
 var url = "ws://192.168.4.1:1337/";
 
 var output;
-var button;
-var canvas;
-var context;
+//var button;
+//var canvas;
+//var context;
 
 // This is called when the page finishes loading
 function init() {
 
     // Assign page elements to variables
-    button = document.getElementById("toggleButton");
+    //button = document.getElementById("toggleButton");
     output = document.getElementById("output");
-    canvas = document.getElementById("led");
+    //canvas = document.getElementById("led");
     
     // Draw circle in canvas
-    context = canvas.getContext("2d");
+    /*context = canvas.getContext("2d");
     context.arc(25, 25, 15, 0, Math.PI * 2, false);
     context.lineWidth = 3;
     context.strokeStyle = "black";
     context.stroke();
     context.fillStyle = "black";
-    context.fill();
+    context.fill();*/
     
     // Connect to WebSocket server
     wsConnect(url);
@@ -41,7 +41,7 @@ function init() {
 
 // Call this to connect to the WebSocket server
 function wsConnect(url) {
-    
+    console.log("Connecting websocket to " + url);
     // Connect to WebSocket server
     websocket = new WebSocket(url);
     
@@ -58,6 +58,8 @@ function onOpen(evt) {
     // Log connection state
     console.log("Connected");
     
+    document.getElementById("connection_status").style.backgroundColor = 'GREEN';
+
     // Enable button
     button.disabled = false;
     
@@ -69,10 +71,11 @@ function onOpen(evt) {
 function onClose(evt) {
 
     // Log disconnection state
-    console.log("Disconnected");
-    
+    console.log("Disconnected, reconnecting in 2s..");
+    document.getElementById("connection_status").style.backgroundColor = 'RED';
+
     // Disable button
-    button.disabled = true;
+    //button.disabled = true;
     
     // Try to reconnect after a few seconds
     setTimeout(function() { wsConnect(url) }, 2000);
@@ -83,18 +86,18 @@ function onMessage(evt) {
 
     // Print out our received message
     console.log("Received: " + evt.data);
-    
-    // Update circle graphic with LED state
-    switch(evt.data) {
-        case "0":
-            console.log("LED is off");
-            context.fillStyle = "black";
-            context.fill();
+    var parts = evt.data.split(" ");
+
+    switch(parts[0]) {
+        case "T":
+            //console.log("Temp: " + parts[1]);
+            document.getElementById("kilntemp").innerHTML = parts[1];
             break;
-        case "1":
-            console.log("LED is on");
-            context.fillStyle = "red";
-            context.fill();
+        case "P":
+            console.log("Profile");
+            break;
+        case "L":
+            console.log("List");
             break;
         default:
             break;
@@ -109,20 +112,25 @@ function onError(evt) {
 // Sends a message to the server (and prints it to the console)
 function doSend(message) {
     console.log("Sending: " + message);
-    websocket.send(message);
+    if (websocket.readyState === WebSocket.OPEN) {
+        websocket.send(message);
+    }
+    else {
+        console.log("Websocket not open: " + websocket.readyState);
+    }
 }
 
 // Called whenever the HTML button is pressed
-function onPress() {
+/*function onPress() {
     doSend("toggleLED");
     doSend("getLEDState");
-}
+}*/
 
 // Call the init function as soon as the page loads
 window.addEventListener("load", init, false);
 
 var arrHead = new Array();	// array for header.
-arrHead = ['', 'Rate (°C/hr)', 'Target (°C)', 'Time (hr)'];
+arrHead = ['', 'Rate (°C/hr)', 'Target (°C)', 'Time (hr)', 'Hold (min)'];
 
 // first create TABLE structure with the headers. 
 function createTable() {
@@ -142,6 +150,7 @@ function createTable() {
 
 // now, add a new to the TABLE.
 function addRow() {
+    console.log("Add row");
     var empTab = document.getElementById('empTable');
 
     var rowCnt = empTab.rows.length;   // table row count.
@@ -179,12 +188,44 @@ function addRow() {
 
 // delete TABLE row function.
 function removeRow(oButton) {
+    console.log("Delete row");
     var empTab = document.getElementById('empTable');
     empTab.deleteRow(oButton.parentNode.parentNode.rowIndex); // button -> td -> tr.
 }
 
 // function to extract and submit table data.
 function submit() {
+}
+
+function startStopProfile(action) {
+    if (action == 1) { // start
+        console.log("Start profile");
+    }
+    else if (action == 2) { // pause
+        console.log("Pause profile");
+    }
+    else { // abort
+        console.log("Abort profile");
+    }
+}
+
+function startStopKiln(action) {
+    if (action == 1) { // start
+        console.log("Start kiln");
+    }
+    else { // stop
+        console.log("Stop kiln");
+    }
+    doSend("toggleKiln");
+}
+
+function createProfile() {
+    console.log("Create profile");
+}
+
+function saveProfile() {
+    console.log("Save profile");
+
     var myTab = document.getElementById('empTable');
     var myName = document.getElementById('profile_name');
     var arrValues = new Array();
@@ -204,14 +245,27 @@ function submit() {
     
     // The final output.
     document.getElementById('output').innerHTML = arrValues;
-    //console.log (arrValues);   // you can see the array values in your browsers console window. Thanks :-) 
+    console.log (arrValues);   // you can see the array values in your browsers console window. Thanks :-) 
+}
+
+
+function loadProfile(name) {
+    console.log("Load profile " + name);
+}
+
+function deleteProfile(name) {
+    console.log("Delete profile " + name);
 }
 </script>
 
 <body onload="createTable()">
-
+<div id="connection_status" style="position:absolute; right: 100px; width: 30px; height: 20px; background-color: red;">ws</div>
     <center>
-    
+        <p style="font-weight: bold;">
+            Kiln
+        </p>
+        Temperature: <span id="kilntemp">0</span>
+      
         <p style="font-weight: bold;">
         Firing profile
         </p>
@@ -219,18 +273,20 @@ function submit() {
         <div id="cont"></div>  <!-- the container to add the TABLE -->
         
         <p>
+            <input type="button" id="bt_create_profile" value="Create new profile" onclick="createProfile()" /> 
             <input type="button" id="bt_add_row" value="Add new row" onclick="addRow()" /> 
-            <input type="button" id="bt_save" value="Save profile" onclick="submit()" />
+            <input type="button" id="bt_save" value="Save profile" onclick="saveProfile()" />
         </p>
 
         <p>
-            <input type="button" id="bt_start_profile" value="Start profile" onclick="submit()" /> 
-            <input type="button" id="bt_stop_profile" value="Stop profile" onclick="submit()" />
+            <input type="button" id="bt_start_profile" value="Start profile" onclick="startStopProfile(1)" /> 
+            <input type="button" id="bt_pause_profile" value="Pause profile" onclick="startStopProfile(2)" />
+            <input type="button" id="bt_abort_profile" value="Abort profile" onclick="startStopProfile(0)" />
         </p>
             
         <p>
-            <input type="button" id="bt_start_kiln" value="Start kiln" onclick="submit()" /> 
-            <input type="button" id="bt_stop_kiln" value="Stop kiln" onclick="submit()" />
+            <input type="button" id="bt_start_kiln" value="Start kiln" onclick="startStopKiln(1)" /> 
+            <input type="button" id="bt_stop_kiln" value="Stop kiln" onclick="startStopKiln(0)" />
         </p>
 
         <p id='output'></p>
@@ -245,6 +301,7 @@ function submit() {
         <p style="font-weight: bold;">
             Stored profiles
         </p>
+        test profile 1 ( <a href="#" onClick='loadProfile("test profile 1")'>LOAD</a> | <a href="#" onClick='deleteProfile("test profile 1")'>DELETE</a> )
         <div id="profiles_container"></div>  <!-- the container to add the TABLE -->
         <span style="font-weight: bold;">Golem</span><br/>
         A open controller for electric kilns
