@@ -4,10 +4,10 @@ A open controller for electric kilns.
 ## Firing/temperature profiles
 A firing profile is described like this:
 
-Segment number | Rate (°C / hr) | Target temperature (°C) | Segment time (hr)
--------------- | -------------- | ----------------------- | -----------------
-1 | 100 | 250 | 2.5
-2 | 200 | 850 | 3
+Segment number | Rate (°C / hr) | Target temperature (°C) | Segment time (hr) | Hold target temperature (minutes)
+-------------- | -------------- | ----------------------- | ----------------- | ---------------------------------
+1 | 100 | 250 | 2.5 | 0
+2 | 200 | 850 | 3 | 0
 
 and the same profile in JSON:
 
@@ -16,16 +16,18 @@ and the same profile in JSON:
   "name" : "Raku",
   "1" : {
     "rate" : 100,
-    "target" : 250
+    "target" : 250,
+    "hold" : 0
     },
   "2" : {
     "rate" : 200,
-    "target" : 800
+    "target" : 800,
+    "hold" : 0
     }
 }
 ```
 
-but currently each profile is stored as a SPIFFS file like ```/prog/<profile name>``` and contains ```<rate>,<target>{,<rate>,<target>}```, for example:
+but currently each profile is stored as a SPIFFS file like ```/prog/<profile name>``` and contains ```<rate>,<target>,<hold>{,<rate>,<target>,<hold>}```, for example:
 
 ```
 80,250,50,800
