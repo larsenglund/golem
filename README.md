@@ -6,8 +6,8 @@ A firing profile is described like this:
 
 Segment number | Rate (°C / hr) | Target temperature (°C) | Segment time (min) | Hold target temperature (min)
 -------------- | -------------- | ----------------------- | ------------------ | -----------------------------
-1 | 100 | 250 | 2.5 | 0
-2 | 200 | 850 | 3 | 0
+1 | 100 | 250 | 150 | 0
+2 | 200 | 850 | 180 | 0
 
 and the same profile in JSON:
 
