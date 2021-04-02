@@ -4,8 +4,8 @@ A open controller for electric kilns.
 ## Firing/temperature profiles
 A firing profile is described like this:
 
-Segment number | Rate (°C / hr) | Target temperature (°C) | Segment time (hr) | Hold target temperature (minutes)
--------------- | -------------- | ----------------------- | ----------------- | ---------------------------------
+Segment number | Rate (°C / hr) | Target temperature (°C) | Segment time (min) | Hold target temperature (min)
+-------------- | -------------- | ----------------------- | ------------------ | -----------------------------
 1 | 100 | 250 | 2.5 | 0
 2 | 200 | 850 | 3 | 0
 
