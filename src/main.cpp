@@ -41,6 +41,7 @@ DNSServer dnsServer;
 AsyncWebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(1337);
 char msg_buf[256];
+char tmp_buf[64];
 int led_state = 0;
 int kiln_ssr_state = 0;
 int32_t rawData = 0;
@@ -130,20 +131,34 @@ void onWebSocketEvent(uint8_t client_num,
       // Print out raw message
       Serial.printf("[%u] Received text: '%s'\n", client_num, payload);
 
-      // Toggle LED
-      if ( strcmp((char *)payload, "toggleKiln") == 0 ) {
+      // Toggle kiln
+      if ( strncmp((char *)payload, "toggleKiln", 10) == 0 ) {
         kiln_ssr_state = kiln_ssr_state ? 0 : 1;
         Serial.printf("Toggling kiln to %u\n", kiln_ssr_state);
-        digitalWrite(kiln_ssr, kiln_ssr_state ? 1 : 0);
+        digitalWrite(kiln_ssr, kiln_ssr_state ? 0 : 1);
 
-      // Report the state of the LED
-      } else if ( strcmp((char *)payload, "getKilnState") == 0 ) {
+      // Report the state of the kiln
+      } else if ( strncmp((char *)payload, "getKilnState", 12) == 0 ) {
         sprintf(msg_buf, "%d", led_state);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
-      // Message not recognized
-      } else {
+      } else if ( strncmp((char *)payload, "saveProfile", 11) == 0 ) {
+        char* tok = strtok((char *)payload, ":");
+        tok = strtok(0, ":");
+        sprintf(tmp_buf, "/prog/%s", tok);
+        tok = strtok(0, ":");
+        File file = SPIFFS.open(tmp_buf, "w");
+        if (!file) {
+          Serial.println("Error opening file for writing");
+          //return;
+        }
+        else {
+          Serial.printf("Writing %s to %s", tok, tmp_buf);
+          file.print(tok);
+        } 
+
+      } else { // Message not recognized
         Serial.printf("[%u] Message not recognized", client_num);
       }
       break;
@@ -409,7 +424,12 @@ void loop() {
     tft.drawLine(72,0,72,32,TFT_GREEN);
 
     tft.setCursor(74, 0);
-    tft.setTextColor(TFT_RED);
+    if (kiln_ssr_state == 1) {
+      tft.setTextColor(TFT_GREEN);
+    }
+    else {
+      tft.setTextColor(TFT_RED);
+    }
     tft.print("HEAT ");
     tft.setTextColor(websocket_connected ? TFT_GREEN : TFT_RED);
     tft.print("WS");

@@ -85,7 +85,6 @@ function onClose(evt) {
 function onMessage(evt) {
 
     // Print out our received message
-    console.log("Received: " + evt.data);
     var parts = evt.data.split(" ");
 
     switch(parts[0]) {
@@ -100,6 +99,7 @@ function onMessage(evt) {
             console.log("List");
             break;
         default:
+            console.log("Received: " + evt.data);
             break;
     }
 }
@@ -130,7 +130,7 @@ function doSend(message) {
 window.addEventListener("load", init, false);
 
 var arrHead = new Array();	// array for header.
-arrHead = ['', 'Rate (°C/hr)', 'Target (°C)', 'Time (hr)', 'Hold (min)'];
+arrHead = ['', 'Rate (°C/hr)', 'Target (°C)', 'Time (min)', 'Hold (min)'];
 
 // first create TABLE structure with the headers. 
 function createTable() {
@@ -176,7 +176,7 @@ function addRow() {
         }
         else 
         {
-            // 2nd, 3rd and 4th column, will have textbox.
+            // 2nd, 3rd, 4th and 5th column, will have textbox.
             var ele = document.createElement('input');
             ele.setAttribute('type', 'text');
             ele.setAttribute('value', '');
@@ -229,8 +229,10 @@ function saveProfile() {
     var myTab = document.getElementById('empTable');
     var myName = document.getElementById('profile_name');
     var arrValues = new Array();
+    var str = "";
 
-    arrValues.push("'" + myName.value + "'");
+    arrValues.push(myName.value);
+    str += "saveProfile:" + myName.value + ":";
 
     // loop through each row of the table.
     for (row = 1; row < myTab.rows.length - 1; row++) {
@@ -238,7 +240,9 @@ function saveProfile() {
         for (c = 0; c < myTab.rows[row].cells.length; c++) {  
             var element = myTab.rows.item(row).cells[c];
             if (element.childNodes[0].getAttribute('type') == 'text') {
-                arrValues.push("'" + element.childNodes[0].value + "'");
+                //arrValues.push("'" + element.childNodes[0].value + "'");
+                var val = parseInt("0" + element.childNodes[0].value);
+                arrValues.push(val);
             }
         }
     }
@@ -246,6 +250,24 @@ function saveProfile() {
     // The final output.
     document.getElementById('output').innerHTML = arrValues;
     console.log (arrValues);   // you can see the array values in your browsers console window. Thanks :-) 
+    
+    // Calculate missing entries
+    var prevtemp = 20;
+    for (var n=1; n<arrValues.length; n+=4) {
+        if (arrValues[n] == 0) {
+            console.log("calcrate");
+            arrValues[n] = Math.round((arrValues[n+1] - prevtemp) / (arrValues[n+2]/60));
+        }
+        if (arrValues[n+2] == 0) {
+            arrValues[n+2] = Math.round(60 * (arrValues[n+1] - prevtemp) / arrValues[n]);
+        }
+        prevtemp = arrValues[n+1];
+        for (var m = n; m < n+4; m++) {
+            str += arrValues[m]  + ",";
+        }
+    }
+    console.log (str);
+    doSend(str);
 }
 
 
@@ -259,7 +281,7 @@ function deleteProfile(name) {
 </script>
 
 <body onload="createTable()">
-<div id="connection_status" style="position:absolute; right: 100px; width: 30px; height: 20px; background-color: red;">ws</div>
+<div id="connection_status" style="position:absolute; right: 100px; width: 30px; height: 20px; background-color: red;">WS</div>
     <center>
         <p style="font-weight: bold;">
             Kiln
