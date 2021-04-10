@@ -65,4 +65,7 @@ The user can;
 * start and stop the kiln manually
 The AP name is "Golem-AP" and the password is "golgolem".
 ## Todo
+Valde Ionic med Vue utifrån dessa;
+https://betterprogramming.pub/react-native-vs-flutter-vs-ionic-46d3350f96ee
+https://www.codeinwp.com/blog/angular-vs-vue-vs-react
 * Add file browser for uploading, downloading, viewing and editing raw JSON-files. ACE might be a good editor to embed.
