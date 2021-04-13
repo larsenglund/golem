@@ -71,9 +71,13 @@ I2C SDA -> IO21
 I2C SCL -> IO22
 I2C CS  -> IO26
 
-BTN 1   -> IO27
-BTN 2   -> IO32
-BTN 3   -> IO33
+SSR     -> IO27
+RESERVED-> IO32
+RESERVED-> IO33
+
+BTN 1   -> IO34
+BTN 2   -> IO35
+BTN 3   -> IO36
 ```
 
 Hardware test setup:
