@@ -54,6 +54,7 @@ The graph on the TFT shows one Y-pixel per 50 degrees and one X-pixel per 3 minu
 * 3 x Solid State Relays (one for each phase of the three phase 400VAC kiln)
 
 Pinout
+```
 TFT RST  -> IO4
 TFT CS   -> IO5
 TFT DC   -> IO25
@@ -73,6 +74,7 @@ I2C CS  -> IO26
 BTN 1   -> IO27
 BTN 2   -> IO32
 BTN 3   -> IO33
+```
 
 Hardware test setup:
 
