@@ -79,6 +79,7 @@ BTN 1   -> IO34
 BTN 2   -> IO35
 BTN 3   -> IO36
 ```
+With help from https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view and https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
 Hardware test setup:
 
