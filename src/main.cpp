@@ -1,9 +1,9 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-//#include <WiFi.h>
+//#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <DNSServer.h>
-#include <FS.h>
-//#include <SPIFFS.h>
+//#include <FS.h>
+#include <SPIFFS.h>
 #include <ESPAsyncWebServer.h>
 #include <WebSocketsServer.h>
 //#include <Adafruit_GFX.h>      // include Adafruit graphics library
@@ -23,11 +23,11 @@ const char *msg_get_led = "getLEDState";
 const int dns_port = 53;
 const int http_port = 80;
 const int ws_port = 1337;
-const int led_pin = LED_BUILTIN;
-const int thermocouple_so = D6;
-const int thermocouple_cs = D0;
-const int kiln_ssr = D1;
-const int thermocouple_sck = D8;
+const int led_pin = 2;
+const int thermocouple_so = 25; //21;
+const int thermocouple_cs = 26;
+const int thermocouple_sck = 27; //22;
+const int kiln_ssr = 27;
 const int max_num_segments = 10;
 const int minutes_per_pixel = 3;
 const int degrees_per_pixel = 50;
@@ -56,14 +56,17 @@ char profile_name[32] = "test profile";
 bool websocket_connected = false;
 
 // ST7735 TFT module connections
-#define TFT_RST   D4     // TFT RST pin is connected to NodeMCU pin D4 (GPIO2)
-#define TFT_CS    D3     // TFT CS  pin is connected to NodeMCU pin D4 (GPIO0)
-#define TFT_DC    D2     // TFT DC  pin is connected to NodeMCU pin D4 (GPIO4)
+/*#define TFT_RST   -1      // D4 TFT RST pin is connected to NodeMCU pin D4 (GPIO2)
+#define TFT_CS    5     // D3 TFT CS  pin is connected to NodeMCU pin D4 (GPIO0)
+#define TFT_DC    2     // D2 TFT DC  pin is connected to NodeMCU pin D4 (GPIO4)
+#define TFT_MOSI  23
+#define TFT_MISO  -1                                                                                                                                                                                                                                                                                                                                                                           
+#define TFT_SCLK  18*/
 // initialize ST7735 TFT library with hardware SPI module
 // SCK (CLK) ---> NodeMCU pin D5 (GPIO14)
 // MOSI(DIN) ---> NodeMCU pin D7 (GPIO13)
 //Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
-TFT_eSPI tft;
+TFT_eSPI tft = TFT_eSPI();
 
 
 void sendCurrentState(int client_num) {
@@ -78,7 +81,7 @@ void sendCurrentState(int client_num) {
 
 void sendProfileList(int client_num) {
   Serial.printf("sendProfileList to %d\n", client_num);
-  int pos = sprintf(msg_buf, "LIST");
+  /*int pos = sprintf(msg_buf, "LIST");
   Dir dir = SPIFFS.openDir("/prog");
   int n=0;
   while (dir.next()) {
@@ -95,7 +98,7 @@ void sendProfileList(int client_num) {
   }
   Serial.printf("Found %d firing profiles\n", n);
   Serial.printf("Sending to [%d]: %s\n", client_num, msg_buf);
-  webSocket.sendTXT(client_num, msg_buf);
+  webSocket.sendTXT(client_num, msg_buf);*/
 }
 
 // Callback: receiving any WebSocket message
@@ -286,17 +289,27 @@ void drawProfileGraph() {
 void setup() {
   Serial.begin(115200);
   Serial.println(F("\nGolem setup"));
+  //Serial.print(F("LARSTEST: "));
+  //Serial.println(LARSTEST);
 
   //tft.initR(INITR_BLACKTAB);
   //tft.initR(INITR_BLACKTAB);
+  #ifdef ST7735_DRIVER 
+  Serial.println("ST7735_DRIVER");
+  #endif
+  #ifdef ST7735_GREENTAB128 
+  Serial.println("ST7735_GREENTAB128");
+  #endif
+  Serial.println(TFT_ESPI_VERSION);
   tft.init();
   //tft.setRotation(2);
-  tft.fillScreen(ST7735_BLACK);
+  tft.fillScreen(TFT_BLACK);
   tft.setCursor(0, 0);
   tft.setTextWrap(false);
   //tft.setFont(&Picopixel);
-  tft.setTextColor(ST7735_WHITE);
+  tft.setTextColor(TFT_WHITE);
   tft.println("Golem setup...");
+  //delay(3000);
 
   //pinMode(LED_BUILTIN, OUTPUT);
   pinMode(kiln_ssr, OUTPUT);
@@ -312,7 +325,7 @@ void setup() {
   readThermocouple(true);
 
   // Make sure we can read the file system
-  if( !SPIFFS.begin()){
+  /*if( !SPIFFS.begin()){
     Serial.println("Error mounting SPIFFS");
     while(1);
   }
@@ -327,7 +340,7 @@ void setup() {
         File f = dir.openFile("r");
         Serial.println(f.size());
         f.close();
-        n++;
+    1    n++;
     }
   }
   Serial.printf("Found %d firing profiles\n", n);
@@ -340,7 +353,7 @@ void setup() {
     int len = file_current_state.readBytesUntil('\n', buffer, sizeof(buffer)-1);
     buffer[len] = '\0';
     Serial.printf("Last profile was %s", buffer);
-  }
+  }*/
 
   // Start access point
   WiFi.mode(WIFI_AP);
