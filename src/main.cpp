@@ -14,6 +14,7 @@
 #include <MAX31855soft.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
+#include <SD.h>
 
 // Constants
 const char *ssid = "Golem-AP";
@@ -31,6 +32,8 @@ const int kiln_ssr = 27;
 const int max_num_segments = 10;
 const int minutes_per_pixel = 3;
 const int degrees_per_pixel = 50;
+
+SPIClass SDSPI(HSPI);
 
 MAX31855soft myMAX31855(thermocouple_cs, thermocouple_so, thermocouple_sck);
 
@@ -285,6 +288,50 @@ void drawProfileGraph() {
 }
 
 
+void printDirectory(File dir, int numTabs) {
+
+  while (true) {
+
+    File entry =  dir.openNextFile();
+
+    if (! entry) {
+
+      // no more files
+
+      break;
+
+    }
+
+    for (uint8_t i = 0; i < numTabs; i++) {
+
+      Serial.print('\t');
+
+    }
+
+    Serial.print(entry.name());
+
+    if (entry.isDirectory()) {
+
+      Serial.println("/");
+
+      printDirectory(entry, numTabs + 1);
+
+    } else {
+
+      // files have sizes, directories do not
+
+      Serial.print("\t\t");
+
+      Serial.println(entry.size(), DEC);
+
+    }
+
+    entry.close();
+
+  }
+}
+
+
 
 void setup() {
   Serial.begin(115200);
@@ -310,6 +357,16 @@ void setup() {
   tft.setTextColor(TFT_WHITE);
   tft.println("Golem setup...");
   //delay(3000);
+
+  SDSPI.begin(14, 32, 13, 15);//sck, miso, mosi, -1);
+  if (!SD.begin(15, SDSPI)) {
+    Serial.println("Card Mount Failed");
+  }
+  else {
+    File root;
+    root = SD.open("/");
+    printDirectory(root, 0);
+  }
 
   //pinMode(LED_BUILTIN, OUTPUT);
   pinMode(kiln_ssr, OUTPUT);
