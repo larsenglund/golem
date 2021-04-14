@@ -47,11 +47,39 @@ Temperature readings are taken every second. These sliding average over the last
 The graph on the TFT shows one Y-pixel per 50 degrees and one X-pixel per 3 minutes.
 
 ## Hardware
-* ESP8266 or ESP32
+* ESP32
 * MAX31855 (MAX31855KASA+T)
 * K-type thermoucouple rated for atleast 1300 degrees
 * 1.44 inch TFT (128x128px) (optional)
 * 3 x Solid State Relays (one for each phase of the three phase 400VAC kiln)
+
+Pinout
+```
+TFT RST  -> IO4
+TFT CS   -> IO5
+TFT DC   -> IO25
+TFT CLK  -> IO18
+TFT MOSI -> IO23
+TFT MISO -> IO19
+
+SD SCLK -> IO14
+SD MOSI -> IO13
+SD MISO -> IO12
+SD CS   -> IO15
+
+I2C SDA -> IO21
+I2C SCL -> IO22
+I2C CS  -> IO26
+
+SSR     -> IO27
+RESERVED-> IO32
+RESERVED-> IO33
+
+BTN 1   -> IO34
+BTN 2   -> IO35
+BTN 3   -> IO36
+```
+With help from https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view and https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
 Hardware test setup:
 
