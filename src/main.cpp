@@ -55,7 +55,8 @@ int current_segment = 2;
 File file_current_state;
 int segment_rate[max_num_segments] = {100, 200, 300, 400, 0, 0, 0, 0, 0, 0};
 int segment_target[max_num_segments] = {200, 300, 900, 1200, 0, 0, 0, 0, 0, 0};
-char profile_name[32] = "test profile";
+int segment_time[max_num_segments] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+char profile_name[32] = "no profile";
 bool websocket_connected = false;
 
 // ST7735 TFT module connections
@@ -324,6 +325,36 @@ void printDirectory(File dir, int numTabs) {
 
       Serial.println(entry.size(), DEC);
 
+      int max_line_len = 32;
+      char line[32];
+      int i = 0;
+      int ln = 1;
+      char ch;
+      while (true) {
+        ch = entry.read();
+        line[i++] = ch;
+        if (i >= max_line_len-1) {
+          Serial.print(F("ERROR: File line to long! "));
+          Serial.println(i);
+          break;
+        }
+        if (ch == '\n' || !entry.available()) {
+          line[i] = '\0';
+          // Print line number.
+          Serial.print(ln++);
+          Serial.print(": ");
+          Serial.print(line);
+          if (line[i - 1] != '\n') {
+            // Line is too long or last line is missing nl.
+            Serial.println(F(" <-- missing nl"));
+          }
+          i = 0;
+        }
+        if (!entry.available()) {
+          break;
+        }
+      }
+
     }
 
     entry.close();
@@ -364,7 +395,7 @@ void setup() {
   }
   else {
     File root;
-    root = SD.open("/");
+    root = SD.open("/kiln");
     printDirectory(root, 0);
   }
 
