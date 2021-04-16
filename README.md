@@ -57,7 +57,7 @@ Pinout
 ```
 TFT RST  -> IO4
 TFT CS   -> IO5
-TFT DC   -> IO25
+TFT DC   -> IO2
 TFT CLK  -> IO18
 TFT MOSI -> IO23
 TFT MISO -> IO19
@@ -67,17 +67,17 @@ SD MOSI -> IO13
 SD MISO -> IO12
 SD CS   -> IO15
 
-I2C SDA -> IO21
-I2C SCL -> IO22
+I2C SDA -> IO25
+I2C SCL -> IO27
 I2C CS  -> IO26
 
 SSR     -> IO27
 RESERVED-> IO32
 RESERVED-> IO33
-
 BTN 1   -> IO34
-BTN 2   -> IO35
-BTN 3   -> IO36
+BTN 2   -> IO36
+
+Temp sensor -> IO35
 ```
 With help from https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view and https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
