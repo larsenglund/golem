@@ -11,7 +11,7 @@
 </style>
 <script language="javascript" type="text/javascript">
 
-var url = "ws://192.168.4.1:1337/";
+var url;// = "ws://192.168.4.1:1337/";
 
 var output;
 //var button;
@@ -36,6 +36,9 @@ function init() {
     context.fill();*/
     
     // Connect to WebSocket server
+    var ip = location.host;
+    //alert(ip);
+    url = "ws://" + ip + ":1337/";
     wsConnect(url);
 }
 

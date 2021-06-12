@@ -19,6 +19,8 @@
 // Constants
 const char *ssid = "Golem-AP";
 const char *password =  "golgolem";
+const char *local_ssid = "Totoro";
+const char *local_password = "u11egu11e";
 const char *msg_toggle_led = "toggleLED";
 const char *msg_get_led = "getLEDState";
 const int dns_port = 53;
@@ -28,7 +30,7 @@ const int led_pin = 2;
 const int thermocouple_so = 25; //21;
 const int thermocouple_cs = 26;
 const int thermocouple_sck = 27; //22;
-const int kiln_ssr = 27;
+const int kiln_ssr = 33;
 const int max_num_segments = 10;
 const int minutes_per_pixel = 3;
 const int degrees_per_pixel = 50;
@@ -142,7 +144,7 @@ void onWebSocketEvent(uint8_t client_num,
       if ( strncmp((char *)payload, "toggleKiln", 10) == 0 ) {
         kiln_ssr_state = kiln_ssr_state ? 0 : 1;
         Serial.printf("Toggling kiln to %u\n", kiln_ssr_state);
-        digitalWrite(kiln_ssr, kiln_ssr_state ? 0 : 1);
+        digitalWrite(kiln_ssr, kiln_ssr_state ? 1 : 0);
 
       // Report the state of the kiln
       } else if ( strncmp((char *)payload, "getKilnState", 12) == 0 ) {
@@ -401,7 +403,7 @@ void setup() {
 
   //pinMode(LED_BUILTIN, OUTPUT);
   pinMode(kiln_ssr, OUTPUT);
-  digitalWrite(kiln_ssr, HIGH);
+  digitalWrite(kiln_ssr, LOW);
   
   myMAX31855.begin();
   while (myMAX31855.getChipID() != MAX31855_ID)
@@ -413,11 +415,11 @@ void setup() {
   readThermocouple(true);
 
   // Make sure we can read the file system
-  /*if( !SPIFFS.begin()){
+  if( !SPIFFS.begin()){
     Serial.println("Error mounting SPIFFS");
     while(1);
   }
-  Serial.println("Listing firing profiles:");
+  /*Serial.println("Listing firing profiles:");
   Dir dir = SPIFFS.openDir("/prog");
   int n=0;
   while (dir.next()) {
@@ -443,8 +445,9 @@ void setup() {
     Serial.printf("Last profile was %s", buffer);
   }*/
 
+
   // Start access point
-  WiFi.mode(WIFI_AP);
+  /*WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   if (WiFi.softAP(ssid, password)) {
     Serial.println("AP started");
@@ -460,7 +463,19 @@ void setup() {
   // provided IP to all DNS request
   if (dnsServer.start(dns_port, "*", apIP)){
     Serial.println("DNS captive portal started");
+  }*/
+
+  // Connect to WiFi instead of starting AP
+  WiFi.disconnect(true);
+  WiFi.begin(local_ssid, local_password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
   }
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.println("IP: ");
+  Serial.println(WiFi.localIP());
 
   // On HTTP request for root, provide index.html file
   server.on("/", HTTP_GET, onIndexRequest);
@@ -522,6 +537,9 @@ void loop() {
     //tft.println("1337");
     tft.setTextSize(1);
 
+    tft.setCursor(1, 84);
+    tft.print(WiFi.localIP());
+
     tft.drawLine(72,0,72,32,TFT_GREEN);
 
     tft.setCursor(74, 0);
@@ -573,7 +591,7 @@ void loop() {
     drawProfileGraph();
   }
 
-  dnsServer.processNextRequest();
+  //dnsServer.processNextRequest();
   webSocket.loop();
   delay(10);
 }
